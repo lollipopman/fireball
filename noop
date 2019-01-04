@@ -1,0 +1,3 @@
+#!/bin/bash
+BASE_DIR=$(dirname "${0}")
+puppet apply --noop --modulepath=/usr/share/puppet/modules:"${BASE_DIR}/modules" --execute 'include fireball'

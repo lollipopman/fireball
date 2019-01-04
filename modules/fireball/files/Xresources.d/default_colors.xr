@@ -1,0 +1,8 @@
+! ----------------------------
+! Contrasty Darkness
+! Version: 2017-08-16
+! https://www.markusweimar.de/
+! ----------------------------
+
+*vt100.background: black
+*vt100.foreground: white
