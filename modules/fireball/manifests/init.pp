@@ -69,6 +69,7 @@ class fireball {
       'powertop',
       'pulseaudio',
       'python-pip',
+      'pv',
       'rfkill',
       'scrot',
       'socat',
