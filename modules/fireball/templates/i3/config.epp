@@ -2,8 +2,7 @@
 #
 # Please see http://i3wm.org/docs/userguide.html for a complete reference!
 
-# Use Alt as mod
-set $mod Mod1
+set $mod <%= $mod %>
 
 # font for window titles. ISO 10646 = Unicode
 font pango:Source Code Pro 14

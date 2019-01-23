@@ -1,0 +1,14 @@
+[Unit]
+Description=Dropbox Network Storage Daemon, %i
+PartOf=graphical-session.target
+
+[Service]
+Type=forking
+Environment="HOME=/home/%u/dropboxes/%i"
+PIDFile=/home/%u/dropboxes/%i/.dropbox/dropbox.pid
+ExecStart=/usr/bin/dropbox start
+ExecStop=/usr/bin/dropbox stop
+Restart=always
+
+[Install]
+WantedBy=xorg-session.target

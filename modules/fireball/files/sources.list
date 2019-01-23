@@ -1,0 +1,3 @@
+deb http://mirrors.kernel.org/debian sid main contrib non-free
+deb http://mirrors.kernel.org/debian experimental main contrib non-free
+deb-src http://mirrors.kernel.org/debian sid main contrib non-free

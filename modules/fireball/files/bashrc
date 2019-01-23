@@ -1,0 +1,93 @@
+#!/bin/bash
+# ~/.bashrc: executed by bash(1) for non-login shells.
+# vim: set noexpandtab:shiftwidth=1
+
+pathmunge() {
+	if ! echo "${PATH}" | grep -Eq "(^|:)$1($|:)"; then
+		if [ "$2" = "after" ]; then
+			PATH=$PATH:$1
+		else
+			PATH=$1:$PATH
+		fi
+	fi
+}
+
+pathmunge ~/bin after
+pathmunge ~/.cabal/bin
+pathmunge ~/go/bin
+pathmunge /sbin after
+pathmunge /usr/sbin after
+pathmunge /home/jhathaway/node_modules/.bin after
+pathmunge /home/jhathaway/.cargo/bin
+
+# If not running interactively, don't do anything
+[ -z "$PS1" ] && return
+
+# don't put duplicate lines in the history. See bash(1) for more options
+export HISTCONTROL=erasedups
+export HISTFILESIZE=2000
+
+# check the window size after each command and, if necessary,
+# update the values of LINES and COLUMNS.
+shopt -s checkwinsize
+shopt -s cmdhist
+shopt -s lithist
+
+# extended globbing, including negating
+shopt -s extglob
+
+# make less more friendly for non-text input files, see lesspipe(1)
+[ -x /usr/bin/lesspipe ] && eval "$(lesspipe)"
+
+PS1='; '
+
+umask u=rwx,g=rwx,o=rx
+
+## Bash Options
+
+# set vi mode
+set -o vi
+
+alias xclip="xclip -selection clipboard"
+
+# Exports
+export HISTIGNORE="&:ls:[bf]g:exit"
+export LESS="-fMiFRx4X"
+export EDITOR=vi
+export LIBVIRT_DEFAULT_URI='qemu:///system'
+export GOPATH=~/go
+
+alias lsblk='lsblk -o NAME,SIZE,TYPE,FSTYPE,MODEL,MOUNTPOINT,LABEL'
+alias rlock='rm -f ~/bt/kdb/*lock'
+alias addkeys='ssh-add ~/.ssh/id_rsa_git ~/.ssh/id_rsa_new ~/.ssh/id_rsa'
+alias htask="task project:home"
+alias wtask="task project:work"
+alias o="xdg-open"
+alias strip-escape-codes='sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"'
+
+# https://unix.stackexchange.com/questions/18087/can-i-get-individual-man-pages-for-the-bash-builtin-commands
+man() {
+	if [[ "${#@}" -gt 1 ]]; then
+		command -p man "$@"
+	else
+		case "$(type -t "$1"):$1" in
+		builtin:*) help "$1" | "${PAGER:-less}" ;; # built-in
+		*[[?*]*) help "$1" | "${PAGER:-less}" ;; # pattern
+		*) command -p man "$@" ;; # something else, presumed to be an external command
+		esac
+	fi
+}
+
+export RMADISON_ARCHITECTURE='amd64'
+export TERM=xterm
+export DEBEMAIL="hathaway@paypal.com"
+export DEBFULLNAME="Jesse Hathaway"
+export MANWIDTH=80
+
+# allows less to know the total line length via stdin, by going to the EOF,
+# this then allows it to generate a percentage in the status line.
+export MANPAGER='less +Gg'
+
+# tabs at 4
+tabs -4
+alias ls='ls -T4 -w80'

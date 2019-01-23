@@ -31,7 +31,8 @@
 ! Treat, !, %, *, -, ., /, ?, @, :, and ~ as part of numbers and words for selecting, Stolen from UNIX Power Tools
 *.VT100.charClass:                   33:48, 37:48, 42:48, 45-47:48, 58:48, 63-64:48, 126:48
 *.VT100.backarrowKey:                false
-!*.VT100.decTerminalID:               340
+! Allow sixel graphics. (Try: "convert -colors 16 foo.jpg sixel:-").
+*.VT100.decTerminalID:              vt340
 !*.VT100.numColorRegisters:           256
 *.VT100.internalBorder:              0
 *.VT100.allowWindowOps:              true
@@ -45,3 +46,4 @@
         Ctrl Shift <Key>V:          insert-selection(CLIPBOARD) \n\
         Ctrl Shift <Key>C:          copy-selection(CLIPBOARD)
 ! Shift <Btn1Up>:             exec-formatted("google-chrome '%t'", CLIPBOARD)
+! Allow sixel graphics. (Try: "convert -colors 16 foo.jpg sixel:-").

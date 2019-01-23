@@ -1,27 +1,39 @@
 # TODO
 # - [x] dmrc
 # - [x] i3configs
-#   - [ ] i3status.conf
+#   - [x] i3status.conf
 # - [x] tmux
 # - [x] vim
-# - [ ] add ~/bin to path
+# - [x] add ~/bin to path
+# - [x] manage .config/pulse/default.pa, to add connection switching
+# - [x] groups
+#   - [x] lpadmin for cups
+#   - [x] dialout for cu
+#   - [x] sudo for sudo
+# - [x] create a systemd config for xss-lock
+# - [x] Add work CAs to Chrome & Firefox
+#   - [x] certutil -d sql:$HOME/.pki/nssdb -A -n 'DEN1-SSLCA-001-CA' -i /usr/local/share/ca-certificates/DEN1-SSLCA-001-CA.crt -t TCP,TCP,TCP
+# - [x] replace vim_dotfiles's activate script
+# - [x] vimrc_local
+# - [x] firewall
+#   - [x] switch to iptables via update-alternatives
+#   - [x] add iptables-persistent pkg
+#   - [x] put files in /etc/iptables/*
+# - [x] dropbox
+#   - [x] apt repo
+#   - [x] create a systemd config for dropbox personal & work, grab from arch?
+#   - [x] symlinks
+#
+# Low priority
 # - [ ] replace 'xbacklight' with acpilight?
-# - [ ] manage .config/pulse/default.pa, to add connection switching
-# - [ ] create a systemd config for xss-lock
-# - [ ] add me to the sudoers group
 # - [ ] powertop --auto-tune
 # - [ ] cups config
-#   - [ ] lounge, dnssd://CHI-1-8-C700-X7845._ipps._tcp.local/?uuid=a623df28-e371-11e6-8421-9c934e55356b
-# - [ ] groups
-#   - [ ] ldapadmin, cups
-#   - [ ] dialout, cu
-# - [ ] dropbox
-#   - [ ] create a systemd config for dropbox personal & work
-# - [ ] Add work CAs to Chrome & Firefox
-#   - [ ] certutil -d sql:$HOME/.pki/nssdb -A -n 'DEN1-SSLCA-001-CA' -i /usr/local/share/ca-certificates/DEN1-SSLCA-001-CA.crt -t TCP,TCP,TCP
 
-class fireball {
-
+class fireball(
+  $user = $facts['user'],
+  $home = "/home/${user}",
+)
+{
   package {
     [
       'acpi',
@@ -38,6 +50,8 @@ class fireball {
       'dict-moby-thesaurus',
       'dictd',
       'dnsutils',
+      'docker-ce',
+      'dropbox',
       'dstat',
       'ethtool',
       'exuberant-ctags',
@@ -46,6 +60,7 @@ class fireball {
       'firmware-linux-nonfree',
       'fonts-noto',
       'gawk',
+      'nomacs', # gui image editor
       'git',
       'google-chrome-stable',
       'i3',
@@ -53,6 +68,7 @@ class fireball {
       'jq',
       'keepassx',
       'lightdm',
+      'libnss3-tools', # certutil
       'lsof',
       'moreutils',
       'msmtp',
@@ -93,7 +109,18 @@ class fireball {
       'yeahconsole',
     ]:
     ensure => latest,
-    require => File['/etc/apt/sources.list.d'],
+    require => [
+      File['/etc/apt/sources.list'],
+      File['/etc/apt/sources.list.d'],
+    ],
+  }
+
+  file { '/etc/apt/sources.list':
+    ensure => file,
+    source => 'puppet:///modules/fireball/sources.list',
+    owner => 'root',
+    group => 'root',
+    mode  => '0664',
   }
 
   file { '/etc/apt/sources.list.d':
@@ -114,12 +141,15 @@ class fireball {
 
   package {
     [
-      'nano',
+      'firefox-esr',
       'mawk',
+      'nano',
       'netcat-traditional',
     ]:
     ensure => purged,
   }
+
+  # vim
 
   package { 'vim-gtk':
     ensure => latest,
@@ -130,26 +160,51 @@ class fireball {
     require => Package['vim-gtk'],
   }
 
+  vcsrepo { "${home}/.vim":
+    source => 'https://github.com/braintreeps/vim_dotfiles.git',
+    revision => master,
+    ensure => present,
+    provider => git,
+    group => $user,
+    owner => $user,
+    user => $user,
+  }
+
+  file { "${home}/.vimrc":
+    ensure => link,
+    target => "${home}/.vim/vimrc",
+    owner => $user,
+    group => $user,
+  }
+
+  file { "${home}/.vimrc_local":
+    ensure => file,
+    source => 'puppet:///modules/fireball/vimrc_local',
+    owner => $user,
+    group => $user,
+    mode  => '0664',
+  }
+
   # Terminal escape code recorder
   package { 'trachet':
     ensure => latest,
     provider => 'pip'
   }
 
-  file { '/home/hathaway/.fonts':
+  file { "${home}/.fonts":
     ensure => directory,
-    owner => 'hathaway',
-    group => 'hathaway',
+    owner => $user,
+    group => $user,
   }
 
-  vcsrepo { '/home/hathaway/.fonts/source-code-pro':
+  vcsrepo { "${home}/.fonts/source-code-pro":
     source => 'https://github.com/adobe-fonts/source-code-pro.git',
     revision => release,
     ensure => present,
     provider => git,
-    group => 'hathaway',
-    owner => 'hathaway',
-    user => 'hathaway',
+    group => $user,
+    owner => $user,
+    user => $user,
     notify => Exec['fc-cache'],
   }
 
@@ -159,91 +214,267 @@ class fireball {
     refreshonly => true,
   }
 
+  file { "${home}/.config":
+    ensure => directory,
+    owner => $user,
+    group => $user,
+    mode  => '0700',
+  }
+
+  file { "${home}/.config/pulse":
+    ensure => directory,
+    owner => $user,
+    group => $user,
+    mode  => '0700',
+  }
+
   # Set i3 as default xsession
-  file { '/home/hathaway/.dmrc':
+  file { "${home}/.config/pulse/default.pa":
+    ensure => file,
+    source => 'puppet:///modules/fireball/pulseaudio/default.pa',
+    owner => $user,
+    group => $user,
+    mode  => '0664',
+  }
+
+  # Set i3 as default xsession
+  file { "${home}/.dmrc":
     ensure => file,
     source => 'puppet:///modules/fireball/dmrc',
-    owner => 'hathaway',
-    group => 'hathaway',
-    mode  => '0444',
+    owner => $user,
+    group => $user,
+    mode  => '0664',
   }
 
-  file { '/home/hathaway/.config':
+  file { "${home}/.i3":
     ensure => directory,
-    owner => 'hathaway',
-    group => 'hathaway',
+    owner => $user,
+    group => $user,
     mode  => '0755',
   }
 
-  file { '/home/hathaway/.config/i3':
-    ensure => directory,
-    owner => 'hathaway',
-    group => 'hathaway',
-    mode  => '0755',
+  $model = $facts['dmi']['product']['name']
+
+  if $model == "MacBookPro11,1" {
+    $mod = 'Mod4'
+  } else {
+    $mod = 'Mod1'
   }
 
-  file { '/home/hathaway/.config/i3/config':
+  file { "${home}/.i3/config":
     ensure => file,
-    source => 'puppet:///modules/fireball/i3/config',
-    owner => 'hathaway',
-    group => 'hathaway',
-    mode  => '0444',
+    content => epp("fireball/i3/config.epp", { 'mod' => $mod }),
+    owner => $user,
+    group => $user,
+    mode  => '0664',
   }
 
-  file { '/home/hathaway/.tmux.conf':
+  # i3status bar
+  file { "${home}/.i3status.conf":
+    ensure => file,
+    source => 'puppet:///modules/fireball/i3status.conf',
+    owner => $user,
+    group => $user,
+    mode  => '0664',
+  }
+
+  file { "${home}/.tmux.conf":
     ensure => file,
     source => 'puppet:///modules/fireball/tmux.conf',
-    owner => 'hathaway',
-    group => 'hathaway',
-    mode  => '0444',
+    owner => $user,
+    group => $user,
+    mode  => '0664',
   }
 
   # Xresources, xterm & yeahconsole
-  file { '/home/hathaway/.Xresources':
+  file { "${home}/.Xresources":
     ensure => file,
     source => 'puppet:///modules/fireball/Xresources',
-    owner => 'hathaway',
-    group => 'hathaway',
-    mode  => '0444',
+    owner => $user,
+    group => $user,
+    mode  => '0664',
     notify => Exec['load-xresources'],
   }
 
   # Xresources, xterm & yeahconsole
-  file { '/home/hathaway/.Xresources.d':
+  file { "${home}/.Xresources.d":
     ensure => directory,
     source => 'puppet:///modules/fireball/Xresources.d',
     recurse => true,
     purge => true,
-    owner => 'hathaway',
-    group => 'hathaway',
-    mode  => '0755',
+    owner => $user,
+    group => $user,
+    mode  => '0664',
     notify => Exec['load-xresources'],
   }
 
   exec { 'load-xresources':
-    command => 'xrdb -load /home/hathaway/.Xresources',
+    command => "xrdb -load ${home}/.Xresources",
     path => ['/bin', '/usr/bin'],
     refreshonly => true,
   }
 
-  # vim configs
-  vcsrepo { '/home/hathaway/.vim':
-    source => 'https://github.com/braintreeps/vim_dotfiles.git',
+
+  if $model != "MacBookPro11,1" {
+    # X11 startup script
+    # - Meta key mappings, e.g. Windows Key to Ctrl
+    file { "${home}/.xsessionrc":
+      ensure => file,
+      source => 'puppet:///modules/fireball/xsessionrc',
+      owner => $user,
+      group => $user,
+      mode  => '0664',
+    }
+  }
+
+  # bashrc
+  file { "${home}/.bashrc":
+    ensure => file,
+    source => 'puppet:///modules/fireball/bashrc',
+    owner => $user,
+    group => $user,
+    mode  => '0664',
+  }
+
+  user { $user:
+    groups => [
+                'dialout', # cu
+                'cdrom',
+                'floppy',
+                'sudo',
+                'audio',
+                'dip',
+                'shadow',
+                'video',
+                'plugdev',
+                'staff',
+                'netdev',
+                'lpadmin', # cups
+                'docker',
+              ]
+  }
+
+  file { "${home}/.config/systemd":
+    ensure => directory,
+    owner => $user,
+    group => $user,
+    mode  => '0775',
+  }
+
+  file { "${home}/.config/systemd/user":
+    ensure => directory,
+    source => 'puppet:///modules/fireball/systemd/user',
+    recurse => true,
+    purge => true,
+    owner => $user,
+    group => $user,
+    mode  => '0664',
+  }
+
+  file { "${home}/.config/systemd/user/default.target.wants":
+    ensure => directory,
+    recurse => true,
+    purge => true,
+    owner => $user,
+    group => $user,
+    mode  => '0775',
+  }
+
+  file { "${home}/.config/systemd/user/default.target.wants/dropbox@personal.service":
+    ensure => link,
+    target => "${home}/.config/systemd/user/dropbox@.service",
+    owner => $user,
+    group => $user,
+  }
+
+  file { "${home}/.config/systemd/user/default.target.wants/dropbox@work.service":
+    ensure => link,
+    target => "${home}/.config/systemd/user/dropbox@.service",
+    owner => $user,
+    group => $user,
+  }
+
+  file { "${home}/.config/systemd/user/default.target.wants/xss-lock.service":
+    ensure => link,
+    target => "${home}/.config/systemd/user/xss-lock.service",
+    owner => $user,
+    group => $user,
+  }
+
+  # CA Certs
+
+  file { '/usr/local/share/ca-certificates/DEN1-SSLCA-001-CA.crt':
+    ensure => file,
+    source => 'puppet:///modules/fireball/CAs/DEN1-SSLCA-001-CA.crt',
+    owner => 'root',
+    group => 'root',
+    mode  => '0644',
+  }
+
+  exec { 'nssdb-den1':
+    command => "certutil -d sql:${home}/.pki/nssdb -A -n 'DEN1-SSLCA-001-CA' -i /usr/local/share/ca-certificates/DEN1-SSLCA-001-CA.crt -t TCP,TCP,TCP",
+    path => ['/bin', '/usr/bin'],
+    unless => "certutil -d sql:${home}/.pki/nssdb -L | grep -q DEN1-SSLCA-001-CA",
+    require => File['/usr/local/share/ca-certificates/DEN1-SSLCA-001-CA.crt'],
+  }
+
+  # iptables
+
+  package { 'iptables':
+    ensure => latest,
+    notify => Exec['update-alternatives-iptables'],
+  }
+
+  package { 'iptables-persistent':
+    ensure => latest,
+  }
+
+  file { '/etc/iptables':
+    ensure => directory,
+    source => 'puppet:///modules/fireball/iptables',
+    recurse => true,
+    purge => true,
+    owner => 'root',
+    group => 'root',
+  }
+
+  exec { 'update-alternatives-iptables':
+    command => 'update-alternatives --set iptables /usr/sbin/iptables-legacy',
+    path => ['/bin', '/usr/bin'],
+    refreshonly => true,
+  }
+
+  # bin files
+  vcsrepo { "${home}/bin":
+    source => 'https://github.com/lollipopman/bin.git',
     revision => master,
     ensure => present,
     provider => git,
-    group => 'hathaway',
-    owner => 'hathaway',
-    user => 'hathaway',
+    group => $user,
+    owner => $user,
+    user => $user,
   }
 
-  # X11 startup script
-  # - Meta key mappings, e.g. Windows Key to Ctrl
-  file { '/home/hathaway/.xsessionrc':
-    ensure => file,
-    source => 'puppet:///modules/fireball/xsessionrc',
-    owner => 'hathaway',
-    group => 'hathaway',
-    mode  => '0444',
+  # dropbox
+  $pdropbox = [
+    'books',
+    'audio',
+    'docs',
+    'pdocs',
+    'images',
+    'pimages',
+    'notes',
+    'pnotes',
+    'winapps',
+  ]
+
+  $pdropbox.each |String $dir| {
+    file { "${home}/${dir}":
+      ensure => link,
+      target => "${home}/dropboxes/personal/Dropbox/${dir}",
+      owner => $user,
+      group => $user,
+    }
   }
+
 }
