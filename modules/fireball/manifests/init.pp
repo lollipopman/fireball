@@ -115,6 +115,19 @@ class fireball(
     ],
   }
 
+  package {
+    [
+      puppet-agent,
+      puppet-lint,
+      puppet6-release,
+    ]:
+    ensure => latest,
+    require => [
+      File['/etc/apt/sources.list'],
+      File['/etc/apt/sources.list.d'],
+    ],
+  }
+
   file { '/etc/apt/sources.list':
     ensure => file,
     source => 'puppet:///modules/fireball/sources.list',

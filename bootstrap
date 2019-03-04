@@ -1,2 +1,4 @@
 #!/bin/bash
-apt-get install --no-install-recommends -y puppet puppet-module-puppetlabs-stdlib puppet-module-puppetlabs-vcsrepo git
+curl -O https://apt.puppetlabs.com/puppet6-release-stretch.deb
+sudo dpkg -i puppet6-release-stretch.deb
+apt-get install --no-install-recommends -y puppet-agent puppet-lint
