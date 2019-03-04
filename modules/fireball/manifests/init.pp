@@ -367,7 +367,7 @@ class fireball(
                 'netdev',
                 'lpadmin', # cups
                 'docker',
-              ]
+              ],
   }
 
   file { "${home}/.config/systemd":
