@@ -472,13 +472,14 @@ class fireball(
 
   # dropbox
   $pdropbox = [
-    'books',
     'audio',
+    'books',
     'docs',
-    'pdocs',
+    'hacks',
     'images',
-    'pimages',
     'notes',
+    'pdocs',
+    'pimages',
     'pnotes',
     'winapps',
   ]
