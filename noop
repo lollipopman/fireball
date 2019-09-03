@@ -1,4 +1,5 @@
 #!/bin/bash
 BASE_DIR=$(dirname "${0}")
 export FACTER_user=$SUDO_USER
-puppet apply --noop --test --modulepath=/usr/share/puppet/modules:"${BASE_DIR}/modules" --execute 'include fireball'
+#puppet apply --noop --test --modulepath=/usr/share/puppet/modules:"${BASE_DIR}/modules" --execute 'include fireball'
+puppet apply --noop --test --modulepath=/usr/share/puppet/modules:"${BASE_DIR}/modules" site.pp

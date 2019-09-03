@@ -13,7 +13,9 @@
 # - [x] create a systemd config for xss-lock
 # - [x] Add work CAs to Chrome & Firefox
 #   - [x] certutil -d sql:$HOME/.pki/nssdb -A -n 'DEN1-SSLCA-001-CA' -i
-#   /usr/local/share/ca-certificates/DEN1-SSLCA-001-CA.crt -t TCP,TCP,TCP
+#   /usr/local/share/ca-certificates/PayPalCorp_AD_Root.crt -t TCP,TCP,TCP
+# - [ ] add http://adpki.paypalcorp.com/certdata/RootCA_PayPalCorp%20AD%20Root.crt
+#       in der format `openssl x509 -in RootCA_PayPalCorp\ AD\ Root.crt -inform der -text -noout`
 # - [x] replace vim_dotfiles's activate script
 # - [x] vimrc_local
 # - [x] firewall
@@ -35,6 +37,9 @@ class fireball(
   $user = $facts['user'],
   $home = "/home/${user}",
 ) {
+
+  include fireball::firewall
+
   package {
     [
       'acpi',
@@ -51,7 +56,6 @@ class fireball(
       'dict-moby-thesaurus',
       'dictd',
       'dnsutils',
-      'docker-ce',
       'dropbox',
       'dstat',
       'ethtool',
@@ -419,52 +423,52 @@ class fireball(
 
   # CA Certs
 
-  file { '/usr/local/share/ca-certificates/DEN1-SSLCA-001-CA.crt':
+  file { '/usr/local/share/ca-certificates/PayPalCorp_AD_Root.crt':
     ensure => file,
-    source => 'puppet:///modules/fireball/CAs/DEN1-SSLCA-001-CA.crt',
+    source => 'puppet:///modules/fireball/CAs/PayPalCorp_AD_Root.crt',
     owner  => 'root',
     group  => 'root',
     mode   => '0644',
   }
 
   $certutil_cmd = @("EOF"/L)
-    certutil -d sql:${home}/.pki/nssdb -A -n 'DEN1-SSLCA-001-CA' \
-    -i /usr/local/share/ca-certificates/DEN1-SSLCA-001-CA.crt \
+    certutil -d sql:${home}/.pki/nssdb -A -n 'PayPalCorp_AD_Root' \
+    -i /usr/local/share/ca-certificates/PayPalCorp_AD_Root.crt \
     -t TCP,TCP,TCP
     | EOF
 
   exec { 'nssdb-den1':
     command => $certutil_cmd,
     path    => ['/bin', '/usr/bin'],
-    unless  => "certutil -d sql:${home}/.pki/nssdb -L | grep -q DEN1-SSLCA-001-CA",
-    require => File['/usr/local/share/ca-certificates/DEN1-SSLCA-001-CA.crt'],
+    unless  => "certutil -d sql:${home}/.pki/nssdb -L | grep -q PayPalCorp_AD_Root",
+    require => File['/usr/local/share/ca-certificates/PayPalCorp_AD_Root.crt'],
   }
 
-  # iptables
-
-  package { 'iptables':
-    ensure => latest,
-    notify => Exec['update-alternatives-iptables'],
-  }
-
-  package { 'iptables-persistent':
-    ensure => latest,
-  }
-
-  file { '/etc/iptables':
-    ensure  => directory,
-    source  => 'puppet:///modules/fireball/iptables',
-    recurse => true,
-    purge   => true,
-    owner   => 'root',
-    group   => 'root',
-  }
-
-  exec { 'update-alternatives-iptables':
-    command     => 'update-alternatives --set iptables /usr/sbin/iptables-legacy',
-    path        => ['/bin', '/usr/bin'],
-    refreshonly => true,
-  }
+  # # iptables
+  #
+  # package { 'iptables':
+  #   ensure => latest,
+  #   notify => Exec['update-alternatives-iptables'],
+  # }
+  #
+  # package { 'iptables-persistent':
+  #   ensure => latest,
+  # }
+  #
+  # file { '/etc/iptables':
+  #   ensure  => directory,
+  #   source  => 'puppet:///modules/fireball/iptables',
+  #   recurse => true,
+  #   purge   => true,
+  #   owner   => 'root',
+  #   group   => 'root',
+  # }
+  #
+  # exec { 'update-alternatives-iptables':
+  #   command     => 'update-alternatives --set iptables /usr/sbin/iptables-legacy',
+  #   path        => ['/bin', '/usr/bin'],
+  #   refreshonly => true,
+  # }
 
   # bin files
   vcsrepo { "${home}/bin":

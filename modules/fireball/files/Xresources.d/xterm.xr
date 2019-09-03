@@ -14,7 +14,7 @@
 !*.VT100.foreground:                  white
 *.VT100.fontDobuleSize:              true
 !*.VT100.background:                  black
-*.VT100.cursorColor:                 green
+*.VT100.cursorColor:                 purple
 *.VT100.cursorBlink:                 false
 *.VT100.borderWidth:                 0
 *.VT100.printAttributes:             0
