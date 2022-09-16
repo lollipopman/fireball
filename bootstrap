@@ -2,8 +2,12 @@
 
 set -o errexit
 
+PKG='puppet7-release-bullseye.deb'
+
 apt-get install -y curl
-curl -O https://apt.puppetlabs.com/puppet6-release-stretch.deb
-sudo dpkg -i puppet6-release-stretch.deb
+pushd /tmp >/dev/null
+curl -O "https://apt.puppetlabs.com/${PKG}"
+sudo dpkg -i "$PKG"
 sudo apt-get update
 apt-get install --no-install-recommends -y puppet-agent puppet-lint
+popd >/dev/null

@@ -22,17 +22,11 @@
 #   - [x] switch to iptables via update-alternatives
 #   - [x] add iptables-persistent pkg
 #   - [x] put files in /etc/iptables/*
-# - [x] dropbox
-#   - [x] apt repo
-#   - [x] create a systemd config for dropbox personal & work, grab from arch?
-#   - [x] symlinks
-#   - [ ] switch to puppetlabs supported firewall module
 #
 # Low priority
 # - [ ] replace 'xbacklight' with acpilight?
 # - [ ] powertop --auto-tune
 # - [ ] cups config
-
 class fireball(
   $user = $facts['user'],
   $home = "/home/${user}",
@@ -57,7 +51,8 @@ class fireball(
       'dict-moby-thesaurus',
       'dictd',
       'dnsutils',
-      'dropbox',
+      'podman',
+      'buildah',
       'dstat',
       'ethtool',
       'universal-ctags',
@@ -127,7 +122,7 @@ class fireball(
     [
       puppet-agent,
       puppet-lint,
-      puppet6-release,
+      puppet7-release,
     ]:
     ensure  => latest,
     require => [
@@ -171,7 +166,6 @@ class fireball(
   }
 
   # vim
-
   package { 'vim-gtk':
     ensure => latest,
   }
@@ -210,7 +204,7 @@ class fireball(
   package { 'trachet':
     ensure   => latest,
     provider => 'pip',
-    require => Package['python-pip'],
+    require  => Package['python-pip'],
   }
 
   file { "${home}/.fonts":
@@ -372,7 +366,6 @@ class fireball(
                 'staff',
                 'netdev',
                 'lpadmin', # cups
-                'docker',
               ],
   }
 
@@ -400,20 +393,6 @@ class fireball(
     owner   => $user,
     group   => $user,
     mode    => '0775',
-  }
-
-  file { "${home}/.config/systemd/user/default.target.wants/dropbox@personal.service":
-    ensure => link,
-    target => "${home}/.config/systemd/user/dropbox@.service",
-    owner  => $user,
-    group  => $user,
-  }
-
-  file { "${home}/.config/systemd/user/default.target.wants/dropbox@work.service":
-    ensure => link,
-    target => "${home}/.config/systemd/user/dropbox@.service",
-    owner  => $user,
-    group  => $user,
   }
 
   file { "${home}/.config/systemd/user/default.target.wants/xss-lock.service":
@@ -482,28 +461,4 @@ class fireball(
     owner    => $user,
     user     => $user,
   }
-
-  # dropbox
-  $pdropbox = [
-    'audio',
-    'books',
-    'docs',
-    'hacks',
-    'images',
-    'notes',
-    'pdocs',
-    'pimages',
-    'pnotes',
-    'winapps',
-  ]
-
-  $pdropbox.each |String $dir| {
-    file { "${home}/${dir}":
-      ensure => link,
-      target => "${home}/dropboxes/personal/Dropbox/${dir}",
-      owner  => $user,
-      group  => $user,
-    }
-  }
-
 }
