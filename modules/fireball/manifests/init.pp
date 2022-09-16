@@ -47,6 +47,7 @@ class fireball(
       'apt-file',
       'csvtool',
       'cu',
+      'cups',
       'curl',
       'devscripts',
       'dict',
@@ -208,7 +209,8 @@ class fireball(
   # Terminal escape code recorder
   package { 'trachet':
     ensure   => latest,
-    provider => 'pip'
+    provider => 'pip',
+    require => Package['python-pip'],
   }
 
   file { "${home}/.fonts":

@@ -1,4 +1,9 @@
 #!/bin/bash
+
+set -o errexit
+
+apt-get install -y curl
 curl -O https://apt.puppetlabs.com/puppet6-release-stretch.deb
 sudo dpkg -i puppet6-release-stretch.deb
+sudo apt-get update
 apt-get install --no-install-recommends -y puppet-agent puppet-lint
